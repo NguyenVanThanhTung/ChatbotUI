@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           chatBox.innerHTML += `
             <div class="chat-message">
-              <div class="chat-avatar"><img src="https://img.icons8.com/color/96/000000/water-element.png" alt="Cosafe"></div>
+              <div class="chat-avatar"><img src="./assets/icons/cosafeIcon.png" alt="Cosafe"></div>
               <div class="chat-content">
                 <div class="chat-user">Cosafe</div>
                 <div>Xin lỗi, Cosafe không thể tìm thấy sản phẩm nào phù hợp với yêu cầu của bạn.</div>
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add event listener to the trash bin icon to clear chat history
-    const trashIcon = document.querySelector('.chat-trash');
+    const trashIcon = document.querySelector('.trash-icon');
     if (trashIcon) {
       trashIcon.addEventListener('click', function() {
         try {
