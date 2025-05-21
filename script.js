@@ -6,26 +6,28 @@ document.addEventListener('DOMContentLoaded', function() {
       chatBox.scrollTop = chatBox.scrollHeight;
     }
     
-    // Function to save chat history to localStorage
+    // Function to save chat history to Chrome storage
     function saveChatHistory() {
       const chatBox = document.getElementById('chat-box');
       if (chatBox) {
-        localStorage.setItem('chatHistory', chatBox.innerHTML);
-        console.log('Chat history saved');
+        chrome.storage.local.set({ 'chatHistory': chatBox.innerHTML }, function() {
+          console.log('Chat history saved');
+        });
       }
     }
     
-    // Function to load chat history from localStorage
+    // Function to load chat history from Chrome storage
     function loadChatHistory() {
       const chatBox = document.getElementById('chat-box');
       if (chatBox) {
-        const savedHistory = localStorage.getItem('chatHistory');
-        if (savedHistory && savedHistory.trim() !== '') {
-          chatBox.innerHTML = savedHistory;
-          console.log('Chat history loaded');
-        } else {
-          console.log('No chat history found');
-        }
+        chrome.storage.local.get(['chatHistory'], function(result) {
+          if (result.chatHistory && result.chatHistory.trim() !== '') {
+            chatBox.innerHTML = result.chatHistory;
+            console.log('Chat history loaded');
+          } else {
+            console.log('No chat history found');
+          }
+        });
       }
     }
     
@@ -63,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           chatBox.innerHTML += `
             <div class="chat-message">
-              <div class="chat-avatar"><img src="./assets/icons/cosafeIcon.png" alt="Cosafe"></div>
+              <div class="chat-avatar"><img src="assets/icons/cosafeIcon.png" alt="Cosafe"></div>
               <div class="chat-content">
                 <div class="chat-user">Cosafe</div>
                 <div>Xin lỗi, Cosafe không thể tìm thấy sản phẩm nào phù hợp với yêu cầu của bạn.</div>
@@ -93,28 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           const chatBox = document.getElementById('chat-box');
           chatBox.innerHTML = '';
-          localStorage.removeItem('chatHistory');
-          console.log('Chat history cleared');
+          chrome.storage.local.remove(['chatHistory'], function() {
+            console.log('Chat history cleared');
+          });
         } catch (error) {
           console.error('Error clearing chat history:', error);
         }
       });
-    }
-    
-    // Check if localStorage is available
-    function isLocalStorageAvailable() {
-      try {
-        const test = 'test';
-        localStorage.setItem(test, test);
-        localStorage.removeItem(test);
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
-    
-    if (!isLocalStorageAvailable()) {
-      console.warn('localStorage is not available. Chat history will not be saved.');
     }
   });
   
