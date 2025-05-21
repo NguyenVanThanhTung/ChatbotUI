@@ -31,31 +31,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // Function to extract question from text
-    function extractQuestion(text) {
-      // Look for question marks
-      const questions = text.split('?');
-      if (questions.length > 1) {
-        // Return the first question with its question mark
-        return questions[0] + '?';
-      }
-      // If no question mark, return the original text
-      return text;
-    }
-
     // API call function
     async function callChatAPI(query) {
       try {
-        // Extract question from the text
-        const question = extractQuestion(query);
-        
         const response = await fetch('http://localhost:8000/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            query: question,
+            query: query,  // Use the exact input text as query
             user_id: "user123"
           })
         });
