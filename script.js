@@ -1,4 +1,77 @@
-// Wait for DOM to be fully loaded before running script
+// Function to highlight product names on cocolux.com
+function highlightProductNames() {
+  // Check if we're on cocolux.com
+  if (!window.location.hostname.includes('cocolux.com')) return;
+
+  // CSS class for highlighting
+  const style = document.createElement('style');
+  style.textContent = `
+    .cosafe-highlighted {
+      display: inline !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Product name selectors specific to cocolux.com
+  const productNameSelectors = [
+    '.product-card h3', // Product cards on listing pages
+    '.product-detail h1', // Product detail page title
+    '.product-name', // Generic product name class
+    '[class*="product"] h3', // Any product-related containers with h3
+    '[class*="product-title"]' // Elements with product-title in class
+  ];
+
+  // Function to get highlight color from API
+  async function getHighlightColor(productName) {
+    try {
+      const response = await fetch('http://localhost:8000/product-color', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ product_name: productName })
+      });
+      const data = await response.json();
+      return data.color || 'red'; // fallback to red if no color is returned
+    } catch (error) {
+      console.error('Error getting highlight color:', error);
+      return 'red'; // fallback to red on error
+    }
+  }
+
+  // Function to highlight elements
+  async function highlightElement(element) {
+    if (!element.classList.contains('cosafe-highlighted')) {
+      const color = await getHighlightColor(element.textContent);
+      element.classList.add('cosafe-highlighted');
+      element.style.backgroundColor = color;
+      element.style.color = 'white';
+    }
+  }
+
+  // Observe DOM changes for dynamic content
+  const observer = new MutationObserver((mutations) => {
+    productNameSelectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(highlightElement);
+    });
+  });
+
+  // Initial highlighting
+  productNameSelectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(highlightElement);
+  });
+
+  // Start observing
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Execute highlighting function
+highlightProductNames();
+
+// Popup functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Scroll to bottom on load
     function scrollToBottom() {

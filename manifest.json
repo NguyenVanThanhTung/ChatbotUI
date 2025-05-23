@@ -16,5 +16,15 @@
     "48": "assets/icons/cosafeIcon.png",
     "128": "assets/icons/cosafeIcon.png"
   },
-  "permissions": ["storage"]
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://cocolux.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://cocolux.com/*"],
+      "js": ["script.js"],
+      "css": ["styles.css"]
+    }
+  ]
 }
