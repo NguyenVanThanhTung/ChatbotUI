@@ -7,8 +7,6 @@ function highlightProductNames() {
   const style = document.createElement('style');
   style.textContent = `
     .cosafe-highlighted {
-      background-color: red !important;
-      color: white !important;
       display: inline !important;
     }
   `;
@@ -23,10 +21,31 @@ function highlightProductNames() {
     '[class*="product-title"]' // Elements with product-title in class
   ];
 
+  // Function to get highlight color from API
+  async function getHighlightColor(productName) {
+    try {
+      const response = await fetch('http://localhost:8000/product-color', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ product_name: productName })
+      });
+      const data = await response.json();
+      return data.color || 'red'; // fallback to red if no color is returned
+    } catch (error) {
+      console.error('Error getting highlight color:', error);
+      return 'red'; // fallback to red on error
+    }
+  }
+
   // Function to highlight elements
-  function highlightElement(element) {
+  async function highlightElement(element) {
     if (!element.classList.contains('cosafe-highlighted')) {
+      const color = await getHighlightColor(element.textContent);
       element.classList.add('cosafe-highlighted');
+      element.style.backgroundColor = color;
+      element.style.color = 'white';
     }
   }
 
