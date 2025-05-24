@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "Chat with Cosafe in a popup window",
   "action": {
-    "default_popup": "index.html",
+    "default_popup": "ChatUI.html",
     "default_icon": {
       "16": "assets/icons/cosafeIcon.png",
       "48": "assets/icons/cosafeIcon.png",
