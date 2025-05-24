@@ -8,6 +8,7 @@ function highlightProductNames() {
   style.textContent = `
     .cosafe-highlighted {
       display: inline !important;
+      transition: background-color 0.3s ease;
     }
   `;
   document.head.appendChild(style);
@@ -41,28 +42,64 @@ function highlightProductNames() {
 
   // Function to highlight elements
   async function highlightElement(element) {
-    if (!element.classList.contains('cosafe-highlighted')) {
+    if (!element.dataset.colorFetched) {
       const color = await getHighlightColor(element.textContent);
+      element.dataset.highlightColor = color;
+      element.dataset.colorFetched = 'true';
+    }
+  }
+
+  // Function to show highlight
+  function showHighlight(element) {
+    if (!element.classList.contains('cosafe-highlighted')) {
       element.classList.add('cosafe-highlighted');
-      element.style.backgroundColor = color;
+      element.style.backgroundColor = element.dataset.highlightColor;
       element.style.color = 'white';
     }
   }
 
+  // Function to remove highlight
+  function removeHighlight(element) {
+    if (element.classList.contains('cosafe-highlighted')) {
+      element.classList.remove('cosafe-highlighted');
+      element.style.backgroundColor = '';
+      element.style.color = '';
+    }
+  }
+
+  // Create intersection observer
+  const visibilityObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        showHighlight(entry.target);
+      } else {
+        removeHighlight(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.1
+  });
+
+  // Function to setup product highlighting
+  async function setupProductHighlighting(element) {
+    await highlightElement(element);
+    visibilityObserver.observe(element);
+  }
+
   // Observe DOM changes for dynamic content
-  const observer = new MutationObserver((mutations) => {
+  const mutationObserver = new MutationObserver((mutations) => {
     productNameSelectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(highlightElement);
+      document.querySelectorAll(selector).forEach(setupProductHighlighting);
     });
   });
 
-  // Initial highlighting
+  // Initial setup
   productNameSelectors.forEach(selector => {
-    document.querySelectorAll(selector).forEach(highlightElement);
+    document.querySelectorAll(selector).forEach(setupProductHighlighting);
   });
 
-  // Start observing
-  observer.observe(document.body, {
+  // Start observing DOM changes
+  mutationObserver.observe(document.body, {
     childList: true,
     subtree: true
   });
