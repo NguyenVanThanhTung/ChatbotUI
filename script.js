@@ -27,7 +27,10 @@ function highlightProductNames() {
       '.product-ingredients',
       '.product-detail .description', // Product description that may contain ingredients
       '[class*="ingredient"]', // Any element with ingredient in class
-      '.product-information' // Product information section that may list ingredients
+      '.product-information', // Product information section that may list ingredients
+      '.layout-box#tab-1', // Main ingredient tab container
+      '.layout-box#tab-1 .layout-content-text', // Ingredient content inside tab
+      '.layout-box#tab-1 .layout-content-text p' // Paragraphs inside ingredient tab
     ]
   };
 
@@ -35,7 +38,7 @@ function highlightProductNames() {
   async function getProductHighlightColor(productName) {
     try {
       const response = await fetch('http://localhost:8000/lookup_product?product_name=' + encodeURIComponent(productName), {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -58,7 +61,7 @@ function highlightProductNames() {
   async function getIngredientHighlightColor(ingredient) {
     try {
       const response = await fetch('http://localhost:8000/lookup_ingredient?ingredient_name=' + encodeURIComponent(ingredient), {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -90,7 +93,11 @@ function highlightProductNames() {
   // Function to highlight ingredient elements
   async function highlightIngredientElement(element) {
     if (!element.dataset.colorFetched) {
-      const ingredient = element.textContent.trim();
+      // Use 'ingredients' attribute if present, otherwise fallback to text
+      let ingredient = element.getAttribute('ingredients');
+      if (!ingredient) {
+        ingredient = element.textContent.trim();
+      }
       const color = await getIngredientHighlightColor(ingredient);
       element.dataset.highlightColor = color;
       element.dataset.colorFetched = 'true';
