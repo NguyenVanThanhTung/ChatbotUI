@@ -22,28 +22,29 @@ function highlightProductNames() {
     '[class*="product-title"]' // Elements with product-title in class
   ];
 
-  // Function to get highlight color from API
   async function getHighlightColor(productName) {
-    try {
-      const response = await fetch('http://localhost:8000/product-color', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ product_name: productName })
-      });
-      const data = await response.json();
-      return data.color || 'red'; // fallback to red if no color is returned
-    } catch (error) {
-      console.error('Error getting highlight color:', error);
-      return 'red'; // fallback to red on error
+  try {
+    const response = await fetch(`http://localhost:8000/lookup_product?product_name=${encodeURIComponent(productName)}`);
+    
+    if (!response.ok) {
+      console.warn(`Không tìm thấy sản phẩm: ${productName}`);
+      return 'red'; // fallback if product not found
     }
+
+    const data = await response.json();
+    console.log(data.color);
+    return data.color || 'red'; // fallback if color not returned
+  } catch (error) {
+    console.error('Error getting highlight color:', error);
+    return 'red'; // fallback on any other error
   }
+}
 
   // Function to highlight elements
   async function highlightElement(element) {
     if (!element.dataset.colorFetched) {
-      const color = await getHighlightColor(element.textContent);
+      const rawText = element.textContent.trim(); // loại bỏ khoảng trắng đầu/cuối
+      const color = await getHighlightColor(rawText);
       element.dataset.highlightColor = color;
       element.dataset.colorFetched = 'true';
     }
