@@ -14,37 +14,84 @@ function highlightProductNames() {
   document.head.appendChild(style);
 
   // Product name selectors specific to cocolux.com
-  const productNameSelectors = [
-    '.product-card h3', // Product cards on listing pages
-    '.product-detail h1', // Product detail page title
-    '.product-name', // Generic product name class
-    '[class*="product"] h3', // Any product-related containers with h3
-    '[class*="product-title"]' // Elements with product-title in class
-  ];
+  const elementSelectors = {
+    products: [
+      '.product-card h3', // Product cards on listing pages
+      '.product-detail h1', // Product detail page title
+      '.product-name', // Generic product name class
+      '[class*="product"] h3', // Any product-related containers with h3
+      '[class*="product-title"]' // Elements with product-title in class
+    ],
+    ingredients: [
+      '.ingredients-list', // Common class for ingredients
+      '.product-ingredients',
+      '.product-detail .description', // Product description that may contain ingredients
+      '[class*="ingredient"]', // Any element with ingredient in class
+      '.product-information' // Product information section that may list ingredients
+    ]
+  };
 
-  async function getHighlightColor(productName) {
-  try {
-    const response = await fetch(`http://localhost:8000/lookup_product?product_name=${encodeURIComponent(productName)}`);
-    
-    if (!response.ok) {
-      console.warn(`Không tìm thấy sản phẩm: ${productName}`);
-      return 'red'; // fallback if product not found
+  // Function to get product highlight color
+  async function getProductHighlightColor(productName) {
+    try {
+      const response = await fetch('http://localhost:8000/lookup_product?product_name=' + encodeURIComponent(productName), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn(`Failed to get product info for: ${productName}`);
+        return '#ff0000';
+      }
+
+      const data = await response.json();
+      return data.color || '#ff0000';
+    } catch (error) {
+      console.error('Error getting product color:', error);
+      return '#ff0000';
     }
-
-    const data = await response.json();
-    console.log(data.color);
-    return data.color || 'red'; // fallback if color not returned
-  } catch (error) {
-    console.error('Error getting highlight color:', error);
-    return 'red'; // fallback on any other error
   }
-}
 
-  // Function to highlight elements
-  async function highlightElement(element) {
+  // Function to get ingredient highlight color
+  async function getIngredientHighlightColor(ingredient) {
+    try {
+      const response = await fetch('http://localhost:8000/lookup_ingredient?ingredient_name=' + encodeURIComponent(ingredient), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn(`Failed to get ingredient info for: ${ingredient}`);
+        return '#ff0000';
+      }
+
+      const data = await response.json();
+      return data.color || '#ff0000';
+    } catch (error) {
+      console.error('Error getting ingredient color:', error);
+      return '#ff0000';
+    }
+  }
+
+  // Function to highlight product elements
+  async function highlightProductElement(element) {
     if (!element.dataset.colorFetched) {
-      const rawText = element.textContent.trim(); // loại bỏ khoảng trắng đầu/cuối
-      const color = await getHighlightColor(rawText);
+      const productName = element.textContent.trim();
+      const color = await getProductHighlightColor(productName);
+      element.dataset.highlightColor = color;
+      element.dataset.colorFetched = 'true';
+    }
+  }
+
+  // Function to highlight ingredient elements
+  async function highlightIngredientElement(element) {
+    if (!element.dataset.colorFetched) {
+      const ingredient = element.textContent.trim();
+      const color = await getIngredientHighlightColor(ingredient);
       element.dataset.highlightColor = color;
       element.dataset.colorFetched = 'true';
     }
@@ -83,20 +130,62 @@ function highlightProductNames() {
 
   // Function to setup product highlighting
   async function setupProductHighlighting(element) {
-    await highlightElement(element);
+    await highlightProductElement(element);
+    visibilityObserver.observe(element);
+  }
+
+  // Function to setup ingredient highlighting
+  async function setupIngredientHighlighting(element) {
+    await highlightIngredientElement(element);
     visibilityObserver.observe(element);
   }
 
   // Observe DOM changes for dynamic content
   const mutationObserver = new MutationObserver((mutations) => {
-    productNameSelectors.forEach(selector => {
+    // Check for products
+    elementSelectors.products.forEach(selector => {
       document.querySelectorAll(selector).forEach(setupProductHighlighting);
+    });
+    
+    // Check for ingredients
+    elementSelectors.ingredients.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(element => {
+        // Split text into words and wrap each word for potential highlighting
+        const words = element.innerHTML.split(/\b/);
+        const wrappedText = words.map(word => {
+          if (word.trim().length > 2) { // Only process words longer than 2 characters
+            return `<span class="ingredient-term">${word}</span>`;
+          }
+          return word;
+        }).join('');
+        element.innerHTML = wrappedText;
+        
+        // Setup highlighting for each ingredient term
+        element.querySelectorAll('.ingredient-term').forEach(setupIngredientHighlighting);
+      });
     });
   });
 
   // Initial setup
-  productNameSelectors.forEach(selector => {
+  elementSelectors.products.forEach(selector => {
     document.querySelectorAll(selector).forEach(setupProductHighlighting);
+  });
+
+  elementSelectors.ingredients.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      const words = element.innerHTML.split(/\b/);
+      const wrappedText = words.map(word => {
+        if (word.trim().length > 2) {
+          return `<span class="ingredient-term">${word}</span>`;
+        }
+        return word;
+      }).join('');
+      element.innerHTML = wrappedText;
+      
+      element.querySelectorAll('.ingredient-term').forEach(setupIngredientHighlighting);
+    });
   });
 
   // Start observing DOM changes
